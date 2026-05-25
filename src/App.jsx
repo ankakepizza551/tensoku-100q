@@ -157,21 +157,15 @@ export default function App() {
         useCORS: true,
       });
       const filename = `天則勢100の質問_${section.label}.png`;
-      // モバイル：Web Share API でネイティブ共有シートを使う
-      if (navigator.canShare) {
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-        const file = new File([blob], filename, { type: "image/png" });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: filename });
-          return;
-        }
-      }
-      // PC：従来の download リンク
-      const url = canvas.toDataURL("image/png");
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = filename;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } finally {
       setGenerating(null);
     }
