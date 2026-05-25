@@ -1,16 +1,24 @@
-# React + Vite
+# 東方非想天則 天則勢100の質問
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+東方非想天則プレイヤー向けの100問アンケートフォームです。
 
-Currently, two official plugins are available:
+## 機能
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- 100問への回答（自動保存）
+- テキストのコピー・`.txt`ファイル保存
+- セクション別の画像保存（Twitter投稿用・4枚構成）
 
-## React Compiler
+## 使い方
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+[GitHub Pages で公開中](https://ankakepizza551.github.io/tensoku-100q/)
 
-## Expanding the ESLint configuration
+## ローカルで動かす場合
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+```
+
+## ライセンス
+
+[MIT](./LICENSE)
