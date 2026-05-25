@@ -1,0 +1,411 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 射命丸文カラー：墨黒 × 緋紅 × 和紙白 */
+:root {
+  --bg:        #0e0c0c;
+  --bg-card:   #161212;
+  --bg-input:  #1a1515;
+  --border:    #2e2020;
+  --border-hi: #8c1a1a;
+  --red:       #c8201a;
+  --red-light: #e84040;
+  --text:      #ede8e0;
+  --text-dim:  #9a9080;
+  --text-mute: #4a3e3e;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Meiryo", serif;
+  line-height: 1.7;
+}
+
+.container {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+/* ヘッダー */
+header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+header h1 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--text);
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 18px rgba(200, 32, 26, 0.5);
+}
+
+/* 緋色の水平線アクセント */
+header::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 2px;
+  background: var(--red);
+  border-radius: 1px;
+  margin-top: 4px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #2a1e1e;
+  border-radius: 3px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 400px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8c1a1a, #e84040);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progress-label {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+}
+
+.autosave-badge {
+  font-size: 0.72rem;
+  color: #6a5050;
+  letter-spacing: 0.03em;
+}
+
+.autosave-badge::before {
+  content: "●";
+  color: #8c1a1a;
+  margin-right: 4px;
+  font-size: 0.6rem;
+}
+
+.btn-reset {
+  background: none;
+  border: 1px solid #3a2020;
+  color: #7a5050;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.btn-reset:hover {
+  color: #e84040;
+  border-color: var(--red);
+}
+
+/* フォームセクション */
+.section {
+  margin-bottom: 40px;
+}
+
+.section h2 {
+  font-size: 1.05rem;
+  color: var(--red-light);
+  border-left: 4px solid var(--red);
+  padding-left: 10px;
+  margin-bottom: 16px;
+  letter-spacing: 0.05em;
+}
+
+.question-row {
+  margin-bottom: 16px;
+}
+
+.question-row label {
+  display: block;
+  font-size: 0.88rem;
+  color: #c8bfb0;
+  margin-bottom: 4px;
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+}
+
+.q-num {
+  display: inline-block;
+  background: #2a1818;
+  color: var(--red-light);
+  font-size: 0.72rem;
+  font-weight: bold;
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin-right: 8px;
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+}
+
+.question-row textarea {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  padding: 8px 12px;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.question-row textarea:focus {
+  outline: none;
+  border-color: var(--border-hi);
+}
+
+.question-row textarea::placeholder {
+  color: var(--text-mute);
+}
+
+.chara-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  padding: 8px 12px;
+  transition: border-color 0.2s;
+}
+
+.chara-input:focus {
+  outline: none;
+  border-color: var(--border-hi);
+}
+
+.chara-input::placeholder {
+  color: var(--text-mute);
+}
+
+.char-count {
+  display: block;
+  text-align: right;
+  font-size: 0.73rem;
+  color: var(--text-mute);
+  margin-top: 2px;
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+}
+
+.question-row:has(textarea:focus) .char-count {
+  color: var(--text-dim);
+}
+
+/* ボタン類 */
+.submit-bar,
+.copy-bar {
+  position: sticky;
+  bottom: 16px;
+  text-align: center;
+  margin-top: 32px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #8c1a1a, #c8201a);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  padding: 12px 32px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(200, 32, 26, 0.35);
+  transition: opacity 0.2s;
+  letter-spacing: 0.04em;
+}
+
+.btn-primary:hover {
+  opacity: 0.85;
+}
+
+.btn-secondary {
+  background: #1e1616;
+  color: #d0a8a0;
+  border: 1px solid #3a2222;
+  border-radius: 5px;
+  font-size: 0.88rem;
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #2a1e1e;
+}
+
+/* 結果画面 */
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.output-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.result-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.result-box pre {
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", monospace;
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #d8cfc0;
+  line-height: 1.8;
+}
+
+.section-img-heading {
+  font-size: 1rem;
+  color: var(--red-light);
+  border-left: 4px solid var(--red);
+  padding-left: 10px;
+  margin: 32px 0 16px;
+}
+
+.section-img-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.section-img-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+/* 画像として書き出されるカード */
+.img-card {
+  background: #100c0c;
+  border: 1px solid #3a2020;
+  border-radius: 8px;
+  padding: 20px 24px;
+  /* html2canvas向けにゴシック固定（明朝は取得できないことがある） */
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", "Yu Gothic", sans-serif;
+  width: 680px;
+}
+
+.img-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #3a2020;
+}
+
+.img-card-title {
+  font-size: 0.72rem;
+  color: #6a5050;
+}
+
+.img-card-section {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #e84040;
+}
+
+.img-sub-label {
+  font-size: 0.76rem;
+  font-weight: bold;
+  color: #c87070;
+  border-left: 3px solid var(--red);
+  padding-left: 8px;
+  margin-bottom: 10px;
+}
+
+.img-sub-label--gap {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #2e1a1a;
+}
+
+.img-card-row {
+  margin-bottom: 12px;
+}
+
+.img-card-q {
+  font-size: 0.78rem;
+  color: #7a6060;
+  margin-bottom: 2px;
+}
+
+.img-q-num {
+  display: inline-block;
+  background: #2a1818;
+  color: #c86060;
+  font-size: 0.68rem;
+  font-weight: bold;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-right: 6px;
+}
+
+.img-card-a {
+  font-size: 0.9rem;
+  color: #ede8e0;
+  padding-left: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.btn-dl {
+  align-self: flex-start;
+  background: #1e1414;
+  color: #d09090;
+  border: 1px solid #3a2020;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-dl:hover {
+  background: #2a1c1c;
+}
+
+.btn-dl:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
