@@ -153,13 +153,24 @@ export default function App() {
     try {
       const canvas = await html2canvas(ref, {
         scale: 2,
-        backgroundColor: "#0d0f1a",
+        backgroundColor: "#100c0c",
         useCORS: true,
       });
+      const filename = `天則勢100の質問_${section.label}.png`;
+      // モバイル：Web Share API でネイティブ共有シートを使う
+      if (navigator.canShare) {
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+        const file = new File([blob], filename, { type: "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: filename });
+          return;
+        }
+      }
+      // PC：従来の download リンク
       const url = canvas.toDataURL("image/png");
       const a = document.createElement("a");
       a.href = url;
-      a.download = `天則勢100の質問_${section.label}.png`;
+      a.download = filename;
       a.click();
     } finally {
       setGenerating(null);
