@@ -19,7 +19,17 @@
 }
 
 body {
-  background: var(--bg);
+  background:
+    radial-gradient(ellipse 900px 600px at 50% -10%, rgba(140, 26, 26, 0.16), transparent 60%),
+    radial-gradient(ellipse 900px 700px at 50% 110%, rgba(140, 26, 26, 0.1), transparent 60%),
+    repeating-linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.012) 0px,
+      rgba(255, 255, 255, 0.012) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    var(--bg);
   color: var(--text);
   font-family: "Hiragino Mincho ProN", "Yu Mincho", "Meiryo", serif;
   line-height: 1.7;
@@ -29,6 +39,7 @@ body {
   max-width: 760px;
   margin: 0 auto;
   padding: 24px 16px 80px;
+  position: relative;
 }
 
 /* ヘッダー */
@@ -48,17 +59,45 @@ header h1 {
   line-height: 1.5;
   letter-spacing: 0.08em;
   text-shadow: 0 0 18px rgba(200, 32, 26, 0.5);
+  position: relative;
 }
 
-/* 緋色の水平線アクセント */
-header::after {
-  content: "";
-  display: block;
-  width: 80px;
-  height: 2px;
-  background: var(--red);
-  border-radius: 1px;
-  margin-top: 4px;
+/* 天狗の羽根をあしらった紋章アイコン */
+.crest-icon {
+  width: 30px;
+  height: 30px;
+  fill: none;
+  stroke: var(--red-light);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(232, 64, 64, 0.55));
+  opacity: 0.9;
+}
+
+/* 玉飾り付きの水平線アクセント */
+.header-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 220px;
+  margin-top: 2px;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--red), transparent);
+}
+
+.divider-gem {
+  width: 7px;
+  height: 7px;
+  background: var(--red-light);
+  transform: rotate(45deg);
+  box-shadow: 0 0 8px rgba(232, 64, 64, 0.7);
+  flex-shrink: 0;
 }
 
 .progress-bar {
@@ -75,6 +114,27 @@ header::after {
   background: linear-gradient(90deg, #8c1a1a, #e84040);
   border-radius: 3px;
   transition: width 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.35) 45%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: progress-shine 2.6s ease-in-out infinite;
+}
+
+@keyframes progress-shine {
+  0% { background-position: 140% 0; }
+  100% { background-position: -60% 0; }
 }
 
 .progress-label {
@@ -184,11 +244,26 @@ header::after {
 }
 
 .section h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 1.05rem;
   color: var(--red-light);
+  background: linear-gradient(120deg, rgba(140, 26, 26, 0.22), rgba(140, 26, 26, 0.04));
   border-left: 4px solid var(--red);
-  padding-left: 10px;
+  border-radius: 0 4px 4px 0;
+  padding: 5px 16px 5px 10px;
   letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.section h2::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  background: var(--red-light);
+  transform: rotate(45deg);
+  flex-shrink: 0;
 }
 
 .btn-section-reset {
@@ -223,11 +298,13 @@ header::after {
 
 .q-num {
   display: inline-block;
-  background: #2a1818;
+  background: linear-gradient(160deg, #331919, #201010);
   color: var(--red-light);
   font-size: 0.72rem;
   font-weight: bold;
   border-radius: 3px;
+  border: 1px solid rgba(200, 32, 26, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.4);
   padding: 1px 6px;
   margin-right: 8px;
   font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
@@ -250,6 +327,7 @@ header::after {
 .question-row textarea:focus {
   outline: none;
   border-color: var(--border-hi);
+  box-shadow: 0 0 0 3px rgba(200, 32, 26, 0.15);
 }
 
 .question-row textarea::placeholder {
@@ -271,6 +349,7 @@ header::after {
 .chara-input:focus {
   outline: none;
   border-color: var(--border-hi);
+  box-shadow: 0 0 0 3px rgba(200, 32, 26, 0.15);
 }
 
 .chara-input::placeholder {
@@ -304,6 +383,8 @@ header::after {
 }
 
 .btn-primary {
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(135deg, #8c1a1a, #c8201a);
   color: #fff;
   border: none;
@@ -313,12 +394,33 @@ header::after {
   padding: 12px 32px;
   cursor: pointer;
   box-shadow: 0 4px 18px rgba(200, 32, 26, 0.35);
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.15s;
   letter-spacing: 0.04em;
 }
 
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  background-position: 140% 0;
+  transition: background-position 0.6s ease;
+  pointer-events: none;
+}
+
 .btn-primary:hover {
-  opacity: 0.85;
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.btn-primary:hover::after {
+  background-position: -60% 0;
 }
 
 .btn-secondary {
@@ -354,6 +456,7 @@ header::after {
 }
 
 .result-box {
+  position: relative;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -361,6 +464,29 @@ header::after {
   margin-bottom: 24px;
   max-height: 70vh;
   overflow-y: auto;
+}
+
+/* 朱印風のスタンプ */
+.result-box::before {
+  content: "回答";
+  position: absolute;
+  top: -14px;
+  right: 18px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--red-light);
+  font-size: 0.78rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  border: 2px solid var(--red-light);
+  border-radius: 4px;
+  background: rgba(20, 12, 12, 0.9);
+  transform: rotate(-6deg);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  writing-mode: vertical-rl;
 }
 
 .result-box pre {
@@ -373,11 +499,26 @@ header::after {
 }
 
 .section-img-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 1rem;
   color: var(--red-light);
+  background: linear-gradient(120deg, rgba(140, 26, 26, 0.22), rgba(140, 26, 26, 0.04));
   border-left: 4px solid var(--red);
-  padding-left: 10px;
+  border-radius: 0 4px 4px 0;
+  padding: 5px 16px 5px 10px;
   margin: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.section-img-heading::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  background: var(--red-light);
+  transform: rotate(45deg);
+  flex-shrink: 0;
 }
 
 .section-img-heading-row {
@@ -416,6 +557,7 @@ header::after {
 
 /* 画像として書き出されるカード */
 .img-card {
+  position: relative;
   background: #100c0c;
   border: 1px solid #3a2020;
   border-radius: 8px;
@@ -423,6 +565,32 @@ header::after {
   /* html2canvas向けにゴシック固定（明朝は取得できないことがある） */
   font-family: "Hiragino Kaku Gothic ProN", "Meiryo", "Yu Gothic", sans-serif;
   width: 680px;
+}
+
+/* 証書風の角飾り（左上・右下） */
+.img-card::before,
+.img-card::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: rgba(200, 32, 26, 0.55);
+  border-style: solid;
+  border-width: 0;
+}
+
+.img-card::before {
+  top: 8px;
+  left: 8px;
+  border-top-width: 2px;
+  border-left-width: 2px;
+}
+
+.img-card::after {
+  bottom: 8px;
+  right: 8px;
+  border-bottom-width: 2px;
+  border-right-width: 2px;
 }
 
 .img-card-header {
