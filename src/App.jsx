@@ -1,4 +1,4 @@
-import { useState, useRef, useId } from "react";
+import { useState, useRef } from "react";
 import html2canvas from "html2canvas";
 import { questions } from "./questions";
 import "./App.css";
@@ -10,6 +10,21 @@ const CHARACTERS = [
   "伊吹萃香", "小野塚小町", "比那名居天子", "永江衣玖",
   "東風谷早苗", "チルノ", "霊烏路空", "洩矢諏訪子", "紅美鈴",
 ];
+
+// 表記ゆれ（全角/半角スペース・中黒の有無など）を吸収してCHARACTERSの表記に揃える
+const normalizeCharaKey = (s) =>
+  s.replace(/[・･\s\u3000]/g, "").normalize("NFKC");
+
+const CHARA_LOOKUP = new Map(
+  CHARACTERS.map((c) => [normalizeCharaKey(c), c])
+);
+
+const resolveCharaName = (value) => {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  const canonical = CHARA_LOOKUP.get(normalizeCharaKey(trimmed));
+  return canonical ?? trimmed;
+};
 
 // フォーム表示用（7分割）
 const FORM_SECTIONS = [
@@ -101,7 +116,9 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [view, setView] = useState("form");
   const [generating, setGenerating] = useState(null);
+  const [showUnanswered, setShowUnanswered] = useState(false);
   const cardRefs = useRef({});
+  const importInputRef = useRef(null);
 
   const handleChange = (id, value) => {
     setAnswers((prev) => {
@@ -117,8 +134,82 @@ export default function App() {
     setAnswers({});
   };
 
+  const handleResetSection = (section) => {
+    if (!confirm(`「${section.label}」の回答をリセットしますか？`)) return;
+    setAnswers((prev) => {
+      const next = { ...prev };
+      for (let id = section.range[0]; id <= section.range[1]; id++) {
+        delete next[id];
+      }
+      localStorage.setItem("tensoku100q_answers", JSON.stringify(next));
+      return next;
+    });
+  };
+
   const answeredCount = Object.values(answers).filter((v) => v.trim() !== "").length;
   const progress = Math.round((answeredCount / 100) * 100);
+  const unanswered = questions.filter((q) => !answers[q.id]?.trim());
+
+  const jumpToQuestion = (id) => {
+    const el = document.getElementById(`q${id}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.focus();
+  };
+
+  const autoResize = (el) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  const handleExportJSON = () => {
+    const payload = {
+      app: "tensoku100q",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      answers,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "天則勢100の質問_回答データ.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportClick = () => {
+    importInputRef.current?.click();
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // 同じファイルを連続選択しても発火するようにリセット
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const incoming = parsed && typeof parsed === "object" && parsed.answers
+        ? parsed.answers
+        : parsed; // 生のanswersオブジェクトが渡された場合にも対応
+      if (!incoming || typeof incoming !== "object" || Array.isArray(incoming)) {
+        throw new Error("invalid shape");
+      }
+      if (!confirm("読み込んだデータで現在の回答を上書きします。よろしいですか？")) return;
+      const next = {};
+      for (const [key, value] of Object.entries(incoming)) {
+        const id = Number(key);
+        if (Number.isInteger(id) && typeof value === "string") next[id] = value;
+      }
+      localStorage.setItem("tensoku100q_answers", JSON.stringify(next));
+      setAnswers(next);
+    } catch {
+      alert("ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。");
+    }
+  };
 
   const buildText = () => {
     const lines = ["【東方非想天則 天則勢100の質問】", ""];
@@ -146,26 +237,48 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const handleDownloadImage = async (section) => {
+  const renderSectionImage = async (section) => {
     const ref = cardRefs.current[section.label];
-    if (!ref) return;
+    if (!ref) return null;
+    if (document.fonts?.ready) await document.fonts.ready;
+    const canvas = await html2canvas(ref, {
+      scale: 2,
+      backgroundColor: "#100c0c",
+      useCORS: true,
+    });
+    return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  };
+
+  const saveBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadImage = async (section) => {
     setGenerating(section.label);
     try {
-      const canvas = await html2canvas(ref, {
-        scale: 2,
-        backgroundColor: "#100c0c",
-        useCORS: true,
-      });
-      const filename = `天則勢100の質問_${section.label}.png`;
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const blob = await renderSectionImage(section);
+      if (blob) saveBlob(blob, `天則勢100の質問_${section.label}.png`);
+    } finally {
+      setGenerating(null);
+    }
+  };
+
+  const handleDownloadAllImages = async () => {
+    setGenerating("__all__");
+    try {
+      for (const section of IMG_SECTIONS) {
+        const blob = await renderSectionImage(section);
+        if (blob) saveBlob(blob, `天則勢100の質問_${section.label}.png`);
+        // 連続ダウンロードがブラウザにブロックされないよう少し間隔を空ける
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
     } finally {
       setGenerating(null);
     }
@@ -194,7 +307,19 @@ export default function App() {
           <pre>{buildText()}</pre>
         </div>
 
-        <h2 className="section-img-heading">セクション別 画像保存</h2>
+        <div className="section-img-heading-row">
+          <h2 className="section-img-heading">セクション別 画像保存</h2>
+          <button
+            className="btn-primary btn-dl-all"
+            onClick={handleDownloadAllImages}
+            disabled={generating !== null}
+          >
+            {generating === "__all__" ? "生成中..." : "4枚まとめて保存"}
+          </button>
+        </div>
+        <p className="dl-all-hint">
+          ダウンロード後、保存した4枚をまとめて1つの投稿に添付できます。
+        </p>
         <div className="section-img-list">
           {IMG_SECTIONS.map((section) => (
             <div key={section.label} className="section-img-item">
@@ -206,7 +331,7 @@ export default function App() {
               <button
                 className="btn-dl"
                 onClick={() => handleDownloadImage(section)}
-                disabled={generating === section.label}
+                disabled={generating !== null}
               >
                 {generating === section.label ? "生成中..." : `${section.label} を保存`}
               </button>
@@ -221,14 +346,64 @@ export default function App() {
     <div className="container">
       <header>
         <h1>東方非想天則<br />天則勢100の質問</h1>
-        <div className="progress-bar">
+        <div
+          className="progress-bar"
+          role="progressbar"
+          aria-valuenow={progress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="回答の進捗"
+        >
           <div className="progress-fill" style={{ width: `${progress}%` }} />
         </div>
         <div className="header-meta">
           <span className="progress-label">{answeredCount} / 100 問回答済み</span>
           <span className="autosave-badge">自動保存済み</span>
+          {unanswered.length > 0 && (
+            <button
+              className="btn-reset"
+              onClick={() => setShowUnanswered((v) => !v)}
+            >
+              未回答 {unanswered.length}件{showUnanswered ? " ▲" : " ▼"}
+            </button>
+          )}
           <button className="btn-reset" onClick={handleReset}>リセット</button>
         </div>
+        <div className="header-meta">
+          <button className="btn-reset" onClick={handleExportJSON}>
+            バックアップを保存 (.json)
+          </button>
+          <button className="btn-reset" onClick={handleImportClick}>
+            バックアップから復元
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json"
+            hidden
+            onChange={handleImportFile}
+          />
+        </div>
+        {showUnanswered && unanswered.length > 0 && (
+          <div className="unanswered-panel">
+            {unanswered.map((q) => (
+              <button
+                key={q.id}
+                className="unanswered-chip"
+                onClick={() => jumpToQuestion(q.id)}
+              >
+                Q{q.id}
+              </button>
+            ))}
+          </div>
+        )}
+        <nav className="section-nav">
+          {FORM_SECTIONS.map((section) => (
+            <a key={section.label} href={`#section-${section.label}`} className="section-nav-link">
+              {section.label}
+            </a>
+          ))}
+        </nav>
       </header>
 
       {FORM_SECTIONS.map((section) => {
@@ -236,8 +411,16 @@ export default function App() {
           (q) => q.id >= section.range[0] && q.id <= section.range[1]
         );
         return (
-          <section key={section.label} className="section">
-            <h2>{section.label}</h2>
+          <section key={section.label} id={`section-${section.label}`} className="section">
+            <div className="section-heading-row">
+              <h2>{section.label}</h2>
+              <button
+                className="btn-section-reset"
+                onClick={() => handleResetSection(section)}
+              >
+                このセクションをリセット
+              </button>
+            </div>
             {sectionQs.map((q) => (
               <div key={q.id} className="question-row">
                 <label htmlFor={`q${q.id}`}>
@@ -252,6 +435,10 @@ export default function App() {
                       className="chara-input"
                       value={answers[q.id] || ""}
                       onChange={(e) => handleChange(q.id, e.target.value)}
+                      onBlur={(e) => {
+                        const resolved = resolveCharaName(e.target.value);
+                        if (resolved !== e.target.value) handleChange(q.id, resolved);
+                      }}
                       placeholder="キャラ名を入力または選択..."
                     />
                     <datalist id="chara-list">
@@ -262,13 +449,23 @@ export default function App() {
                   <>
                     <textarea
                       id={`q${q.id}`}
+                      ref={autoResize}
                       rows={q.maxLength ? 3 : 2}
                       maxLength={q.maxLength ?? 100}
                       value={answers[q.id] || ""}
-                      onChange={(e) => handleChange(q.id, e.target.value)}
+                      onChange={(e) => {
+                        handleChange(q.id, e.target.value);
+                        autoResize(e.target);
+                      }}
                       placeholder="回答を入力..."
                     />
-                    <span className="char-count">
+                    <span
+                      className={`char-count ${
+                        (answers[q.id] || "").length >= (q.maxLength ?? 100) * 0.9
+                          ? "char-count--warn"
+                          : ""
+                      }`}
+                    >
                       {(answers[q.id] || "").length} / {q.maxLength ?? 100}
                     </span>
                   </>
