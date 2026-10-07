@@ -448,6 +448,19 @@ header h1 {
   margin-bottom: 24px;
 }
 
+.result-header h1 {
+  font-size: 1.4rem;
+  color: var(--text);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 18px rgba(200, 32, 26, 0.5);
+}
+
+.btn-link {
+  display: inline-block;
+  text-decoration: none;
+  line-height: normal;
+}
+
 .output-actions {
   display: flex;
   gap: 12px;

@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import html2canvas from "html2canvas";
 import { questions } from "./questions";
 import "./App.css";
 
@@ -24,6 +23,27 @@ const resolveCharaName = (value) => {
   if (!trimmed) return trimmed;
   const canonical = CHARA_LOOKUP.get(normalizeCharaKey(trimmed));
   return canonical ?? trimmed;
+};
+
+const STORAGE_KEY = "tensoku100q_answers";
+const SHARE_URL = "https://ankakepizza551.github.io/tensoku-100q/";
+const SHARE_INTENT_URL = `https://x.com/intent/post?${new URLSearchParams({
+  text: "東方非想天則 天則勢100の質問に答えました！",
+  url: SHARE_URL,
+  hashtags: "天則勢100の質問",
+})}`;
+
+const QUESTION_IDS = new Set(questions.map((q) => q.id));
+
+// 保存データ・読み込みデータから、存在する質問IDの文字列回答だけを取り出す
+const sanitizeAnswers = (raw) => {
+  const next = {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return next;
+  for (const [key, value] of Object.entries(raw)) {
+    const id = Number(key);
+    if (QUESTION_IDS.has(id) && typeof value === "string") next[id] = value;
+  }
+  return next;
 };
 
 // フォーム表示用（7分割）
@@ -107,8 +127,8 @@ function SectionCard({ section, answers, cardRef }) {
 export default function App() {
   const [answers, setAnswers] = useState(() => {
     try {
-      const saved = localStorage.getItem("tensoku100q_answers");
-      return saved ? JSON.parse(saved) : {};
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? sanitizeAnswers(JSON.parse(saved)) : {};
     } catch {
       return {};
     }
@@ -123,14 +143,14 @@ export default function App() {
   const handleChange = (id, value) => {
     setAnswers((prev) => {
       const next = { ...prev, [id]: value };
-      localStorage.setItem("tensoku100q_answers", JSON.stringify(next));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
     });
   };
 
   const handleReset = () => {
     if (!confirm("回答をすべてリセットしますか？")) return;
-    localStorage.removeItem("tensoku100q_answers");
+    localStorage.removeItem(STORAGE_KEY);
     setAnswers({});
   };
 
@@ -141,14 +161,19 @@ export default function App() {
       for (let id = section.range[0]; id <= section.range[1]; id++) {
         delete next[id];
       }
-      localStorage.setItem("tensoku100q_answers", JSON.stringify(next));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
     });
   };
 
-  const answeredCount = Object.values(answers).filter((v) => v.trim() !== "").length;
-  const progress = Math.round((answeredCount / 100) * 100);
   const unanswered = questions.filter((q) => !answers[q.id]?.trim());
+  const answeredCount = questions.length - unanswered.length;
+  const progress = Math.round((answeredCount / questions.length) * 100);
+
+  const switchView = (next) => {
+    setView(next);
+    window.scrollTo(0, 0);
+  };
 
   const jumpToQuestion = (id) => {
     const el = document.getElementById(`q${id}`);
@@ -199,12 +224,8 @@ export default function App() {
         throw new Error("invalid shape");
       }
       if (!confirm("読み込んだデータで現在の回答を上書きします。よろしいですか？")) return;
-      const next = {};
-      for (const [key, value] of Object.entries(incoming)) {
-        const id = Number(key);
-        if (Number.isInteger(id) && typeof value === "string") next[id] = value;
-      }
-      localStorage.setItem("tensoku100q_answers", JSON.stringify(next));
+      const next = sanitizeAnswers(incoming);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       setAnswers(next);
     } catch {
       alert("ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。");
@@ -222,9 +243,13 @@ export default function App() {
   };
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(buildText());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(buildText());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      alert("コピーに失敗しました。下のテキストを選択してコピーしてください。");
+    }
   };
 
   const handleDownloadText = () => {
@@ -241,6 +266,8 @@ export default function App() {
     const ref = cardRefs.current[section.label];
     if (!ref) return null;
     if (document.fonts?.ready) await document.fonts.ready;
+    // 画像保存時にだけ必要なので遅延読み込みする
+    const { default: html2canvas } = await import("html2canvas");
     const canvas = await html2canvas(ref, {
       scale: 2,
       backgroundColor: "#100c0c",
@@ -288,8 +315,8 @@ export default function App() {
     return (
       <div className="container">
         <div className="result-header">
-          <h1 style={{ color: "#c9aaff", fontSize: "1.4rem" }}>回答結果</h1>
-          <button className="btn-secondary" onClick={() => setView("form")}>
+          <h1>回答結果</h1>
+          <button className="btn-secondary" onClick={() => switchView("form")}>
             ← 編集に戻る
           </button>
         </div>
@@ -301,6 +328,14 @@ export default function App() {
           <button className="btn-secondary" onClick={handleDownloadText}>
             テキストを保存 (.txt)
           </button>
+          <a
+            className="btn-secondary btn-link"
+            href={SHARE_INTENT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Xに投稿
+          </a>
         </div>
 
         <div className="result-box">
@@ -318,7 +353,7 @@ export default function App() {
           </button>
         </div>
         <p className="dl-all-hint">
-          ダウンロード後、保存した4枚をまとめて1つの投稿に添付できます。
+          ダウンロード後、「Xに投稿」で開いた投稿画面に保存した4枚をまとめて添付できます。
         </p>
         <div className="section-img-list">
           {IMG_SECTIONS.map((section) => (
@@ -367,7 +402,7 @@ export default function App() {
           <div className="progress-fill" style={{ width: `${progress}%` }} />
         </div>
         <div className="header-meta">
-          <span className="progress-label">{answeredCount} / 100 問回答済み</span>
+          <span className="progress-label">{answeredCount} / {questions.length} 問回答済み</span>
           <span className="autosave-badge">自動保存済み</span>
           {unanswered.length > 0 && (
             <button
@@ -438,23 +473,18 @@ export default function App() {
                   {q.text}
                 </label>
                 {q.type === "character" ? (
-                  <>
-                    <input
-                      id={`q${q.id}`}
-                      list="chara-list"
-                      className="chara-input"
-                      value={answers[q.id] || ""}
-                      onChange={(e) => handleChange(q.id, e.target.value)}
-                      onBlur={(e) => {
-                        const resolved = resolveCharaName(e.target.value);
-                        if (resolved !== e.target.value) handleChange(q.id, resolved);
-                      }}
-                      placeholder="キャラ名を入力または選択..."
-                    />
-                    <datalist id="chara-list">
-                      {CHARACTERS.map((c) => <option key={c} value={c} />)}
-                    </datalist>
-                  </>
+                  <input
+                    id={`q${q.id}`}
+                    list="chara-list"
+                    className="chara-input"
+                    value={answers[q.id] || ""}
+                    onChange={(e) => handleChange(q.id, e.target.value)}
+                    onBlur={(e) => {
+                      const resolved = resolveCharaName(e.target.value);
+                      if (resolved !== e.target.value) handleChange(q.id, resolved);
+                    }}
+                    placeholder="キャラ名を入力または選択..."
+                  />
                 ) : (
                   <>
                     <textarea
@@ -486,8 +516,12 @@ export default function App() {
         );
       })}
 
+      <datalist id="chara-list">
+        {CHARACTERS.map((c) => <option key={c} value={c} />)}
+      </datalist>
+
       <div className="submit-bar">
-        <button className="btn-primary" onClick={() => setView("result")}>
+        <button className="btn-primary" onClick={() => switchView("result")}>
           回答を確認・出力 →
         </button>
       </div>
